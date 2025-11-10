@@ -1,17 +1,70 @@
 # Curiosity Link
 
-Curiosity Link is a Windows tool designed to facilitate secure access to local files, folders, and network locations from within cloud or on-premises [Curiosity Workspaces](https://curiosity.ai/workspace) through specially crafted links. It supports two URI schemes: `curiosity-open://` for opening files and `curiosity-show://` for revealing files or folders in File Explorer.
+**Curiosity Link** is a Windows utility that securely registers and handles local file and folder links for Curiosity Workspaces. It ensures that only authorized, signed links can open or reveal local or network resources on a user’s device.
+
+---
+
+## Overview
+
+Curiosity Link provides a secure bridge between Curiosity Workspaces and local file systems. It registers custom URI schemes that allow Workspace links to open or reveal files and folders directly on Windows, after verifying their authenticity using RSA public-key signatures.
+
+It supports two URI schemes:
+
+* `curiosity-open://` — opens a file with its default application
+* `curiosity-show://` — reveals a file or folder in File Explorer
+
+---
 
 ## Features
 
-- **Secure Links**: Utilizes SHA3-512 Public/Private RSA key pairs to sign and verify links, ensuring the integrity and authenticity of accessed resources.
-- **Key Management**: Provides commands to generate the required public/private key files automatically.
-- **Signature Verification**: Verifies that accessed resources are authorized using SHA3-512 hashing and RSA signature padding.
+* **RSA Signature Verification** — validates every link with SHA3-512 and RSA signature padding before opening it.
+* **Workspace Certificate Binding** — ensures links only work when signed for the correct Workspace.
+* **Secure Local Access** — prevents tampering or misuse of local file links.
+* **Automatic URI Scheme Registration** — registers Curiosity URI handlers on first launch or via CLI.
+
+---
 
 ## Installation
 
-1. Download the latest release from the [Releases](https://github.com/curiosity-ai/curiosity-link/releases) page.
-2. Run the command `Curiosity-Link create-key-pair` to create the required Public/Private key files.
-3. Place the executable and the `curiosity-link.public-key.pem` in a directory included in your user's devices, and schedule the 'Curiosity-Link.exe' to run once after login for your users, using for example a GPO Logon Script (this will register the URI schemas appropriately).
-4. Upload the `curiosity-link.private-key.pem` file to your Curiosity Workspace.
-5. Use the Curiosity CLI to sync your local and network folders to the Curiosity Workspace. 
+1. **Download** the latest release of `Curiosity-Link.exe` from the Releases page.
+2. **Place** the workspace’s public key file (`<workspace-name>.curiosity-link.public-key.pem`) in the same directory as `Curiosity-Link.exe`.
+3. **Register URI schemes** on user devices:
+
+   ```bash
+   Curiosity-Link register
+   ```
+
+   This can also be done interactively by running `Curiosity-Link.exe` without parameters.
+4. **Deploy** both files (the executable and public key) to user machines, for example using a logon script or GPO.
+
+---
+
+## Usage
+
+Curiosity Link automatically processes `curiosity-open://` and `curiosity-show://` links once registered.
+
+When a user clicks such a link:
+
+1. The app decodes the path.
+2. Verifies the RSA signature using the provided public key.
+3. Confirms that the key matches the Workspace.
+4. Opens or reveals the target file/folder if valid.
+
+If validation fails, an error message is shown instead.
+
+---
+
+## Command Reference
+
+| Command                   | Description                                                |
+| ------------------------- | ---------------------------------------------------------- |
+| `Curiosity-Link`          | Runs interactively, registering URI schemes if none exist. |
+| `Curiosity-Link register` | Registers URI schemes silently (for automation).           |
+
+---
+
+## Security
+
+* Verifies all links using **RSA public-key cryptography** with **SHA3-512** hashing.
+* Rejects unsigned, tampered, or mismatched links.
+* Only accepts links for the Workspace that matches the loaded certificate.
